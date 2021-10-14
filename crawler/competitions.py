@@ -44,11 +44,11 @@ def crawl_competitions():
 
     competitions_df = pd.concat(dfs)
     competitions_df.reset_index(inplace=True, drop=True)
-    utils.save_to_feather(competitions_df, './data/', 'competitions.feather')
+    utils.save_to_parquet(competitions_df, './data/', 'competitions.parquet')
 
 
 def get_event_details(base_url, base_path, filename):
-    df = pd.read_feather(base_path + filename, columns=['id'])
+    df = pd.read_parquet(base_path + filename, columns=['id'])
     dfs = []
     pbar = tqdm(total=df.shape[0])
 
@@ -64,4 +64,4 @@ def get_event_details(base_url, base_path, filename):
     if utils.same_columns(dfs):
         events_details = pd.concat(dfs)
         events_details.reset_index(inplace=True, drop=True)
-        utils.save_to_feather(events_details, './data/', 'events_details.feather')
+        utils.save_to_parquet(events_details, './data/', 'events_details.parquet')
