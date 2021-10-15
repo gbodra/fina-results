@@ -7,23 +7,26 @@ def get_disciplines(base_path, filename):
     df = utils.read_file(base_path, filename)
     disciplines = []
 
-    for _, row in tqdm(df.iterrows()):
+    pbar = tqdm(total=df.shape[0])
+    for _, row in df.iterrows():
         for sports_row in row.Sports:
             if sports_row is not None and sports_row['Code'] == 'SW' and len(sports_row['DisciplineList']) > 0:
                 disciplines.append(sports_row['DisciplineList'])
+        pbar.update(1)
 
+    pbar.close()
     disciplines = utils.flatten_list(disciplines)
     return pd.DataFrame(disciplines)
 
 
-# def get_event_results(df, url):
-#
+def get_discipline_details(df, url):
+    heats = []
+    pbar = tqdm(total=df.shape[0])
+    for _, row in df.iterrows():
+        data_json = utils.get_data_api_json(url.format(row['Id']))
+        heats.append(utils.json_to_pandas(data_json))
+        pbar.update(1)
 
-
-def get_heats(df, url):
-    for _, row in tqdm(df.iterrows()):
-        heats.append(row['Id'])
-
-    heats = utils.flatten_list(heats)
-    return pd.DataFrame(heats)
+    pbar.close()
+    return pd.concat(heats)
 

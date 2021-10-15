@@ -1,3 +1,4 @@
+import pandas as pd
 from tqdm import tqdm
 
 
@@ -23,3 +24,7 @@ def filter_cols(df, col_names):
 
 def flatten_list(t):
     return [item for sublist in t for item in sublist]
+
+
+def json_to_pandas(data):
+    return pd.json_normalize(data)

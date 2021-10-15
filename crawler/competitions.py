@@ -13,9 +13,9 @@ EVENT_COLS = ['Id', 'OfficialName', 'Name', 'City', 'CountryCode', 'CountryId', 
               'ResultsReceived', 'Series', 'Sports', 'From', 'To', 'TimeZone']
 
 
-def get_data_fina(url):
-    result = requests.get(url).json()
-    return result
+# def get_data_fina(url):
+#     result = requests.get(url).json()
+#     return result
 
 
 def crawl_competitions():
@@ -27,7 +27,8 @@ def crawl_competitions():
     while True:
         querystring = '?page=' + str(page) + '&pageSize=' + str(PAGE_SIZE) + '&disciplines=' + DISCIPLINE + \
                       '&group=' + GROUP + '&sort=dateFrom,asc'
-        data = get_data_fina(BASE_URL + querystring)
+        # data = get_data_fina(BASE_URL + querystring)
+        data = utils.get_data_api_json(BASE_URL + querystring)
         df = utils.remove_cols(pd.json_normalize(data['content']), COLS_REMOVE)
         dfs.append(df)
 
@@ -54,7 +55,7 @@ def get_event_details(base_url, base_path, filename):
 
     for _, row in df.iterrows():
         url = base_url.format(row['id'])
-        df = pd.json_normalize(get_data_fina(url))
+        df = pd.json_normalize(utils.get_data_api_json(url))
         df = utils.filter_cols(df, EVENT_COLS)
         dfs.append(df)
         pbar.update(1)
