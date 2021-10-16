@@ -30,3 +30,17 @@ def get_discipline_details(df, url):
     pbar.close()
     return pd.concat(heats)
 
+
+def get_results():
+    disciplines_details = utils.read_file('./data/', 'disciplines_details.parquet')
+    results = []
+    pbar = tqdm(total=disciplines_details.shape[0])
+    for _, row in disciplines_details.iterrows():
+        for heat in row['Heats']:
+            for result in heat['Results']:
+                results.append(result)
+
+        pbar.update(1)
+
+
+    return pd.DataFrame(results)

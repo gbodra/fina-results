@@ -3,33 +3,28 @@ import requests
 import pandas as pd
 from tqdm import tqdm
 
-PAGE_SIZE = 100
-BASE_URL = 'https://api.fina.org/fina/competitions'
-DISCIPLINE = 'SW'
-GROUP = 'FINA'
-COLS_REMOVE = ['metadata.watchNowURL', 'metadata.showGMSLogin', 'metadata.ticketsURL']
-EVENT_COLS = ['Id', 'OfficialName', 'Name', 'City', 'CountryCode', 'CountryId', 'CountryName', 'EventTypeName',
-              'EventTypeId', 'OdfCompetitionCode', 'PoolConfiguration', 'QualificationForEventTypes', 'RegionName',
-              'ResultsReceived', 'Series', 'Sports', 'From', 'To', 'TimeZone']
+# PAGE_SIZE = 100
+# BASE_URL = 'https://api.fina.org/fina/competitions'
+# DISCIPLINE = 'SW'
+# GROUP = 'FINA'
+# COLS_REMOVE = ['metadata.watchNowURL', 'metadata.showGMSLogin', 'metadata.ticketsURL']
+# EVENT_COLS = ['Id', 'OfficialName', 'Name', 'City', 'CountryCode', 'CountryId', 'CountryName', 'EventTypeName',
+#               'EventTypeId', 'OdfCompetitionCode', 'PoolConfiguration', 'QualificationForEventTypes', 'RegionName',
+#               'ResultsReceived', 'Series', 'Sports', 'From', 'To', 'TimeZone']
 
 
-# def get_data_fina(url):
-#     result = requests.get(url).json()
-#     return result
-
-
-def crawl_competitions():
+def crawl_competitions(cfg):
     page = 0
     dfs = []
 
     pbar = tqdm(total=1)
 
     while True:
-        querystring = '?page=' + str(page) + '&pageSize=' + str(PAGE_SIZE) + '&disciplines=' + DISCIPLINE + \
-                      '&group=' + GROUP + '&sort=dateFrom,asc'
-        # data = get_data_fina(BASE_URL + querystring)
-        data = utils.get_data_api_json(BASE_URL + querystring)
-        df = utils.remove_cols(pd.json_normalize(data['content']), COLS_REMOVE)
+        querystring = '?page=' + str(page) + '&pageSize=' + str(cfg['PAGE_SIZE']) + '&disciplines=' +\
+                      cfg['DISCIPLINE'] + '&group=' + cfg['GROUP'] + '&sort=dateFrom,asc'
+
+        data = utils.get_data_api_json(cfg['BASE_URL'] + querystring)
+        df = utils.remove_cols(pd.json_normalize(data['content']), cfg['COLS_REMOVE'])
         dfs.append(df)
 
         if page == 0:
