@@ -1,5 +1,5 @@
 PAGE_SIZE: 100
-BASE_URL: 'https://api.fina.org/fina/competitions'
+BASE_URL: 'https://api.fina.org/fina/'
 DISCIPLINE: 'SW'
 GROUP: 'FINA'
 COLS_REMOVE:
@@ -26,3 +26,4 @@ EVENT_COLS:
 - 'From'
 - 'To'
 - 'TimeZone'
+BASE_PATH: './data/'
