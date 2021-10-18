@@ -4,11 +4,22 @@ from tqdm import tqdm
 
 
 class Fina:
-    def __init__(self):
+    def __init__(self, cache=False):
+        self.cache = cache
         self.df_disciplines = pd.DataFrame()
         self.heats = pd.DataFrame()
         self.results = pd.DataFrame()
         self.config = utils.get_config()
+
+    def get_results(self):
+        if not self.cache:
+            self.crawl_competitions()
+            self.crawl_event_details()
+            self.get_disciplines()
+            self.crawl_discipline_details()
+            self.process_results()
+
+        return utils.read_file(self.config['BASE_PATH'], 'results.parquet')
 
     def crawl_competitions(self):
         page = 0
@@ -87,7 +98,7 @@ class Fina:
         self.heats = pd.concat(heats)
         utils.save_to_file(self.heats, './data/disciplines_details.parquet')
 
-    def get_results(self):
+    def process_results(self):
         disciplines_details = utils.read_file(self.config['BASE_PATH'], 'disciplines_details.parquet')
         results = []
         pbar = tqdm(total=disciplines_details.shape[0])

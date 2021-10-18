@@ -2,6 +2,11 @@ import pandas as pd
 
 
 def save_to_file(df, filename):
+    """Save Pandas DataFrame to a file
+
+        Parameters:
+        filename (string): Name of the file to be saved
+    """
     df.reset_index(inplace=True, drop=True)
 
     extension = filename.split('.')[1]
