@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 import utils
 import pandas as pd
 from tqdm import tqdm
@@ -6,22 +8,32 @@ from tqdm import tqdm
 class Fina:
     def __init__(self, cache=False):
         self.cache = cache
+        self.df_competitions = pd.DataFrame()
+        self.df_events_details = pd.DataFrame()
         self.df_disciplines = pd.DataFrame()
         self.heats = pd.DataFrame()
         self.results = pd.DataFrame()
         self.config = utils.get_config()
 
     def get_results(self):
-        if not self.cache:
-            self.crawl_competitions()
-            self.crawl_event_details()
-            self.get_disciplines()
-            self.crawl_discipline_details()
-            self.process_results()
+        logging.info('Carregando competições...')
+        self.__crawl_competitions()
+        logging.info('Carregando detalhes dos eventos...')
+        self.__crawl_event_details()
+        logging.info('Carregando disciplinas...')
+        self.__get_disciplines()
+        logging.info('Carregando detalhes das disciplinas...')
+        self.__crawl_discipline_details()
+        logging.info('Carregando resultados...')
+        self.__process_results()
 
-        return utils.read_file(self.config['BASE_PATH'], 'results.parquet')
+        return self.results
 
-    def crawl_competitions(self):
+    def __crawl_competitions(self):
+        if self.cache:
+            self.df_competitions = pd.DataFrame(utils.read_file(self.config['BASE_PATH'], 'competitions.parquet')['id'])
+            return True
+
         page = 0
         dfs = []
 
@@ -47,14 +59,20 @@ class Fina:
         pbar.close()
 
         competitions_df = pd.concat(dfs)
+        self.df_competitions = pd.DataFrame(competitions_df['id'])
         utils.save_to_file(competitions_df, self.config['BASE_PATH'] + 'competitions.parquet')
 
-    def crawl_event_details(self):
-        df = pd.read_parquet(self.config['BASE_PATH'] + 'competitions.parquet', columns=['id'])
-        dfs = []
-        pbar = tqdm(total=df.shape[0])
+        return False
 
-        for _, row in df.iterrows():
+    def __crawl_event_details(self):
+        if self.cache:
+            self.df_events_details = utils.read_file(self.config['BASE_PATH'], 'events_details.parquet')
+            return True
+
+        dfs = []
+        pbar = tqdm(total=self.df_competitions.shape[0])
+
+        for _, row in self.df_competitions.iterrows():
             url = self.config['BASE_URL'] + 'competitions/{}/events'
             url = url.format(row['id'])
             df = pd.json_normalize(utils.get_data_api_json(url))
@@ -66,14 +84,16 @@ class Fina:
 
         if utils.same_columns(dfs):
             events_details = pd.concat(dfs)
+            self.df_events_details = events_details
             utils.save_to_file(events_details, self.config['BASE_PATH'] + 'events_details.parquet')
 
-    def get_disciplines(self):
-        df = utils.read_file(self.config['BASE_PATH'], 'events_details.parquet')
+        return False
+
+    def __get_disciplines(self):
         disciplines = []
 
-        pbar = tqdm(total=df.shape[0])
-        for _, row in df.iterrows():
+        pbar = tqdm(total=self.df_events_details.shape[0])
+        for _, row in self.df_events_details.iterrows():
             for sports_row in row.Sports:
                 if sports_row is not None and sports_row['Code'] == self.config['DISCIPLINE']\
                         and len(sports_row['DisciplineList']) > 0:
@@ -84,7 +104,11 @@ class Fina:
         disciplines = utils.flatten_list(disciplines)
         self.df_disciplines = pd.DataFrame(disciplines)
 
-    def crawl_discipline_details(self):
+    def __crawl_discipline_details(self):
+        if self.cache:
+            self.heats = utils.read_file(self.config['BASE_PATH'], 'disciplines_details.parquet')
+            return True
+
         heats = []
         pbar = tqdm(total=self.df_disciplines.shape[0])
         for _, row in self.df_disciplines.iterrows():
@@ -96,13 +120,15 @@ class Fina:
 
         pbar.close()
         self.heats = pd.concat(heats)
-        utils.save_to_file(self.heats, './data/disciplines_details.parquet')
+        utils.save_to_file(self.heats, self.config['BASE_PATH'] + 'disciplines_details.parquet')
 
-    def process_results(self):
-        disciplines_details = utils.read_file(self.config['BASE_PATH'], 'disciplines_details.parquet')
+        return False
+
+    def __process_results(self):
+        # disciplines_details = utils.read_file(self.config['BASE_PATH'], 'disciplines_details.parquet')
         results = []
-        pbar = tqdm(total=disciplines_details.shape[0])
-        for _, row in disciplines_details.iterrows():
+        pbar = tqdm(total=self.heats.shape[0])
+        for _, row in self.heats.iterrows():
             for heat in row['Heats']:
                 for result in heat['Results']:
                     results.append(result)
@@ -110,4 +136,4 @@ class Fina:
             pbar.update(1)
 
         self.results = pd.DataFrame(results)
-        utils.save_to_file(self.results, 'results.parquet')
+        utils.save_to_file(self.results, self.config['BASE_PATH'] + 'results.parquet')
