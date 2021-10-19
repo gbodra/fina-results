@@ -1,5 +1,3 @@
-import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 import utils
 import pandas as pd
 from tqdm import tqdm
@@ -16,15 +14,15 @@ class Fina:
         self.config = utils.get_config()
 
     def get_results(self):
-        logging.info('Carregando competições...')
+        print('Carregando competições...')
         self.__crawl_competitions()
-        logging.info('Carregando detalhes dos eventos...')
+        print('Carregando detalhes dos eventos...')
         self.__crawl_event_details()
-        logging.info('Carregando disciplinas...')
+        print('Carregando disciplinas...')
         self.__get_disciplines()
-        logging.info('Carregando detalhes das disciplinas...')
+        print('Carregando detalhes das disciplinas...')
         self.__crawl_discipline_details()
-        logging.info('Carregando resultados...')
+        print('Carregando resultados...')
         self.__process_results()
 
         return self.results
@@ -125,7 +123,6 @@ class Fina:
         return False
 
     def __process_results(self):
-        # disciplines_details = utils.read_file(self.config['BASE_PATH'], 'disciplines_details.parquet')
         results = []
         pbar = tqdm(total=self.heats.shape[0])
         for _, row in self.heats.iterrows():
