@@ -1,6 +1,7 @@
 import utils
 import pandas as pd
 from tqdm import tqdm
+tqdm.pandas()
 
 
 class Fina:
@@ -58,7 +59,7 @@ class Fina:
 
         competitions_df = pd.concat(dfs)
         self.df_competitions = pd.DataFrame(competitions_df['id'])
-        utils.save_to_file(competitions_df, self.config['BASE_PATH'] + 'competitions.parquet')
+        utils.save_to_file(competitions_df, self.config['BASE_PATH'], 'competitions.parquet')
 
         return False
 
@@ -83,7 +84,7 @@ class Fina:
         if utils.same_columns(dfs):
             events_details = pd.concat(dfs)
             self.df_events_details = events_details
-            utils.save_to_file(events_details, self.config['BASE_PATH'] + 'events_details.parquet')
+            utils.save_to_file(events_details, self.config['BASE_PATH'], 'events_details.parquet')
 
         return False
 
@@ -118,19 +119,28 @@ class Fina:
 
         pbar.close()
         self.heats = pd.concat(heats)
-        utils.save_to_file(self.heats, self.config['BASE_PATH'] + 'disciplines_details.parquet')
+        utils.save_to_file(self.heats, self.config['BASE_PATH'], 'disciplines_details.parquet')
 
         return False
 
     def __process_results(self):
-        results = []
-        pbar = tqdm(total=self.heats.shape[0])
-        for _, row in self.heats.iterrows():
-            for heat in row['Heats']:
-                for result in heat['Results']:
-                    results.append(result)
+        heats_df = self.heats.explode('Heats')
+        heats_df = pd.concat([heats_df, heats_df['Heats'].progress_apply(pd.Series)], axis=1)
+        cols_remove = ['Comment', 'DisciplineStartDate', 'DisciplineStartTime', 'DisciplineEndDate',
+                       'DisciplineEndTime', 'EventOfficialName', 'EventResultDate', 'EventResultTime', 'Heats',
+                       'TimingAndScoringPartnerName', 'TimingAndScoringPartnerLogo1', 'TimingAndScoringPartnerLogo2',
+                       'TimingAndScoringPartnerLogo3', 'TimingAndScoringPartnerLogo4', 'Id', 'LastChange', 0, 'Date',
+                       'EndDate', 'EndTime', 'EndUtcDateTime', 'ExcludeFromEventSummary', 'Name', 'ObjectState',
+                       'Time', 'UnitCode', 'UtcDateTime', 'DisciplineCode', 'AgeGroup', 'Distance', 'PhaseCode',
+                       'PhaseId', 'ResultStatus']
+        heats_df = utils.remove_cols(heats_df, cols_remove)
+        heats_df = heats_df.loc[:, ~heats_df.columns.duplicated()]
+        heats_df = heats_df.explode('Results')
+        heats_df = pd.concat([heats_df, heats_df['Results'].progress_apply(pd.Series)], axis=1)
 
-            pbar.update(1)
-
-        self.results = pd.DataFrame(results)
-        utils.save_to_file(self.results, self.config['BASE_PATH'] + 'results.parquet')
+        cols_remove = [0, 'BiographyId', 'ClubCountryCode', 'ClubName', 'GmsId', 'ScoreboardPhoto', 'ScoringAbbr',
+                       'SubResults']
+        heats_df = utils.remove_cols(heats_df, cols_remove)
+        heats_df = heats_df.loc[:, ~heats_df.columns.duplicated()]
+        self.results = heats_df
+        utils.save_to_file(self.results, self.config['BASE_PATH'], 'results.parquet')
