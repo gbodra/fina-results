@@ -28,3 +28,26 @@ def flatten_list(t):
 
 def json_to_pandas(data):
     return pd.json_normalize(data)
+
+
+def to_seconds(result_time):
+    if result_time == 'None':
+        return 0
+
+    time_split = result_time.split(':')
+    total_seconds = 0
+
+    if len(time_split) == 3:
+        total_seconds = float(time_split[0]) * 60 * 60
+        total_seconds += float(time_split[1]) * 60
+        total_seconds += float(time_split[2])
+
+        return total_seconds
+
+    if len(time_split) == 2:
+        total_seconds = float(time_split[0]) * 60
+        total_seconds += float(time_split[1])
+
+        return total_seconds
+
+    return float(result_time)

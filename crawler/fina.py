@@ -129,7 +129,7 @@ class Fina:
         cols_remove = ['Comment', 'DisciplineStartDate', 'DisciplineStartTime', 'DisciplineEndDate',
                        'DisciplineEndTime', 'EventOfficialName', 'EventResultDate', 'EventResultTime', 'Heats',
                        'TimingAndScoringPartnerName', 'TimingAndScoringPartnerLogo1', 'TimingAndScoringPartnerLogo2',
-                       'TimingAndScoringPartnerLogo3', 'TimingAndScoringPartnerLogo4', 'Id', 'LastChange', 0, 'Date',
+                       'TimingAndScoringPartnerLogo3', 'TimingAndScoringPartnerLogo4', 'Id', 'LastChange', 0,
                        'EndDate', 'EndTime', 'EndUtcDateTime', 'ExcludeFromEventSummary', 'Name', 'ObjectState',
                        'Time', 'UnitCode', 'UtcDateTime', 'DisciplineCode', 'AgeGroup', 'Distance', 'PhaseCode',
                        'PhaseId', 'ResultStatus']
@@ -139,8 +139,9 @@ class Fina:
         heats_df = pd.concat([heats_df, heats_df['Results'].progress_apply(pd.Series)], axis=1)
 
         cols_remove = [0, 'BiographyId', 'ClubCountryCode', 'ClubName', 'GmsId', 'ScoreboardPhoto', 'ScoringAbbr',
-                       'SubResults']
+                       'SubResults', 'Results']
         heats_df = utils.remove_cols(heats_df, cols_remove)
         heats_df = heats_df.loc[:, ~heats_df.columns.duplicated()]
+        heats_df['Time_Seconds'] = heats_df['Time'].progress_apply(lambda x: utils.to_seconds(str(x)))
         self.results = heats_df
         utils.save_to_file(self.results, self.config['BASE_PATH'], 'results.parquet')
